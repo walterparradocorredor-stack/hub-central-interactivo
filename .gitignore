@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# archivos privados / bitácora / scripts temporales
+guiones_seminarios_walther_parrado.md
+scratch_*.py
+CLAUDE.md
