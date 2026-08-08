@@ -748,7 +748,7 @@ export default function DominiosPage() {
           <div className="max-w-2xl mx-auto">
             <div className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl mb-8">
               <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                <Server className="w-6 h-6 text-violet-400" /> Subdominios Gratuitos de Prueba (*.hubcentral.tech)
+                <Server className="w-6 h-6 text-violet-400" /> Subdominios Gratuitos de Prueba (*.hub.waltherparrado.com)
               </h2>
               <p className="text-slate-400 text-sm mb-6">Crea un subdominio gratis en nuestro Servidor VPS para realizar pruebas antes de comprar tu dominio definitivo.</p>
 
@@ -762,7 +762,7 @@ export default function DominiosPage() {
                     placeholder="ej: mi-proyecto-demo"
                     className="flex-1 px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 outline-none text-sm focus:border-violet-500"
                   />
-                  <span className="text-sm font-bold text-slate-400">.hubcentral.tech</span>
+                  <span className="text-sm font-bold text-slate-400">.hub.waltherparrado.com</span>
                 </div>
 
                 <button

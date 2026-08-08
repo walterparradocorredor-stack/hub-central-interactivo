@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre del subdominio debe tener al menos 3 caracteres' }, { status: 400 });
     }
 
-    const fullSubdomain = `${cleanName}.hubcentral.tech`;
+    const fullSubdomain = `${cleanName}.hub.waltherparrado.com`;
     const resolvedIp = targetIp || '31.97.145.8';
 
     // Notificar al bot o registrar
