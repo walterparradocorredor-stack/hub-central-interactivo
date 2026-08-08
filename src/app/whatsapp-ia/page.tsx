@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import {
   Bot,
   MessageCircle,
@@ -15,6 +16,7 @@ import {
   ChevronRight,
   Sparkles,
   Phone,
+  Mail,
   Users,
   BarChart3,
   Clock,
@@ -79,10 +81,34 @@ const COMPETITORS = [
 
 export default function WhatsAppIAPage() {
   const [lines, setLines] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState(1); // 0=web, 1=wa, 2=premium
+  const [selectedPlan, setSelectedPlan] = useState(1);
+
+  // Datos dinámicos del CMS
+  const [contactPhone, setContactPhone] = useState("573143066581");
+  const [contactPhoneDisplay, setContactPhoneDisplay] = useState("+57 314 306 6581");
+  const [contactEmail, setContactEmail] = useState("direccióndeoperaciones@fundetec.edu.co");
+
+  useEffect(() => {
+    supabase
+      .from('cms_content')
+      .select('content')
+      .eq('id', 'home_data')
+      .single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content;
+          if (c.whatsappPhone) setContactPhone(c.whatsappPhone);
+          if (c.phone) setContactPhoneDisplay(c.phone);
+          if (c.contactEmail) setContactEmail(c.contactEmail);
+          if (c.waPagePhone) setContactPhone(c.waPagePhone);
+          if (c.waPageEmail) setContactEmail(c.waPageEmail);
+          if (c.waPagePhoneDisplay) setContactPhoneDisplay(c.waPagePhoneDisplay);
+        }
+      });
+  }, []);
 
   const tier = getPriceTier(lines);
-  const whatsAppLink = `https://wa.me/573017640850?text=${encodeURIComponent(
+  const whatsAppLink = `https://wa.me/${contactPhone}?text=${encodeURIComponent(
     `🤖 *Solicitud — Bot IA & WhatsApp | WP Ecosystem*\n\nHola Dr. Walther, estoy interesado en el servicio de automatización con IA para WhatsApp.\n\n*Líneas WhatsApp requeridas:* ${lines}\n*Plan seleccionado:* ${["Bot Web Essentials", "Bot Web + WhatsApp IA", "Omnicanal Premium"][selectedPlan]}\n*Cotización:* Solicito propuesta personalizada\n\n¡Me gustaría agendar una reunión para conocer más detalles!`
   )}`;
 
@@ -211,10 +237,11 @@ export default function WhatsAppIAPage() {
             {/* ─── PILAR 1: Web Bot ─── */}
             <div
               onClick={() => setSelectedPlan(0)}
-              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${selectedPlan === 0
+              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${
+                selectedPlan === 0
                   ? "border-emerald-500/60 bg-emerald-500/8 shadow-2xl shadow-emerald-500/10"
                   : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
-                }`}
+              }`}
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
@@ -255,10 +282,11 @@ export default function WhatsAppIAPage() {
             {/* ─── PILAR 2: WA + Web — POPULAR ─── */}
             <div
               onClick={() => setSelectedPlan(1)}
-              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${selectedPlan === 1
+              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${
+                selectedPlan === 1
                   ? "border-cyan-400/60 bg-cyan-500/8 shadow-2xl shadow-cyan-500/15"
                   : "border-cyan-500/25 bg-white/[0.03] hover:bg-white/[0.06]"
-                }`}
+              }`}
             >
               {/* Badge popular */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-black text-[10px] rounded-full uppercase tracking-widest">
@@ -313,10 +341,11 @@ export default function WhatsAppIAPage() {
             {/* ─── PILAR 3: Omnicanal Premium ─── */}
             <div
               onClick={() => setSelectedPlan(2)}
-              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${selectedPlan === 2
+              className={`relative p-7 rounded-3xl border cursor-pointer transition-all duration-300 ${
+                selectedPlan === 2
                   ? "border-purple-500/60 bg-purple-500/8 shadow-2xl shadow-purple-500/15"
                   : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
-                }`}
+              }`}
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
@@ -486,10 +515,11 @@ export default function WhatsAppIAPage() {
                       return (
                         <tr
                           key={t.label}
-                          className={`border-b border-white/5 last:border-0 transition-all ${isActive
+                          className={`border-b border-white/5 last:border-0 transition-all ${
+                            isActive
                               ? "bg-emerald-500/10 text-white"
                               : "text-gray-400 hover:bg-white/[0.02]"
-                            }`}
+                          }`}
                         >
                           <td className="px-4 py-3 font-bold">
                             {t.label}
@@ -536,8 +566,9 @@ export default function WhatsAppIAPage() {
               {["🌐 Web Bot", "📱 WA + Web", "🚀 Omnicanal"].map((plan, i) => (
                 <div
                   key={i}
-                  className={`px-4 py-4 text-center text-xs font-black uppercase tracking-wider ${i === 1 ? "text-cyan-400" : i === 2 ? "text-purple-400" : "text-gray-300"
-                    }`}
+                  className={`px-4 py-4 text-center text-xs font-black uppercase tracking-wider ${
+                    i === 1 ? "text-cyan-400" : i === 2 ? "text-purple-400" : "text-gray-300"
+                  }`}
                 >
                   {plan}
                 </div>
@@ -547,24 +578,27 @@ export default function WhatsAppIAPage() {
             {FEATURES.map((feat, i) => (
               <div
                 key={i}
-                className={`grid grid-cols-4 border-b border-white/5 last:border-0 ${i % 2 === 0 ? "bg-white/[0.01]" : ""
-                  }`}
+                className={`grid grid-cols-4 border-b border-white/5 last:border-0 ${
+                  i % 2 === 0 ? "bg-white/[0.01]" : ""
+                }`}
               >
                 <div className="px-6 py-3.5 text-xs text-gray-300 font-medium">{feat.label}</div>
                 {feat.plans.map((has, j) => (
                   <div key={j} className="px-4 py-3.5 flex justify-center">
                     {has ? (
                       <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center ${j === 0
+                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          j === 0
                             ? "bg-emerald-500/20 border border-emerald-500/40"
                             : j === 1
-                              ? "bg-cyan-500/20 border border-cyan-500/40"
-                              : "bg-purple-500/20 border border-purple-500/40"
-                          }`}
+                            ? "bg-cyan-500/20 border border-cyan-500/40"
+                            : "bg-purple-500/20 border border-purple-500/40"
+                        }`}
                       >
                         <Check
-                          className={`w-3 h-3 ${j === 0 ? "text-emerald-400" : j === 1 ? "text-cyan-400" : "text-purple-400"
-                            }`}
+                          className={`w-3 h-3 ${
+                            j === 0 ? "text-emerald-400" : j === 1 ? "text-cyan-400" : "text-purple-400"
+                          }`}
                         />
                       </div>
                     ) : (
@@ -600,12 +634,13 @@ export default function WhatsAppIAPage() {
             {COMPETITORS.map((c, i) => (
               <div
                 key={i}
-                className={`grid grid-cols-4 border-b border-white/5 last:border-0 transition-all ${c.highlight
+                className={`grid grid-cols-4 border-b border-white/5 last:border-0 transition-all ${
+                  c.highlight
                     ? "bg-emerald-500/8 border-emerald-500/20"
                     : i % 2 === 0
-                      ? "bg-white/[0.01]"
-                      : ""
-                  }`}
+                    ? "bg-white/[0.01]"
+                    : ""
+                }`}
               >
                 <div className={`px-6 py-4 text-sm font-bold ${c.highlight ? "text-emerald-400" : "text-gray-300"}`}>
                   {c.name}
@@ -688,18 +723,30 @@ export default function WhatsAppIAPage() {
               </div>
 
               {/* Info de contacto */}
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-xs text-gray-500">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
                 <div className="flex items-center gap-2">
                   <Shield className="w-3.5 h-3.5 text-emerald-500" />
                   Sin compromisos · Demo sin costo
                 </div>
+                <a
+                  href={`https://wa.me/${contactPhone}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-emerald-400 transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                  {contactPhoneDisplay}
+                </a>
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="flex items-center gap-2 hover:text-emerald-400 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                  {contactEmail}
+                </a>
                 <div className="flex items-center gap-2">
                   <Star className="w-3.5 h-3.5 text-yellow-500" />
                   Respuesta en menos de 24h
-                </div>
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  waltherparrado.com
                 </div>
               </div>
             </div>
