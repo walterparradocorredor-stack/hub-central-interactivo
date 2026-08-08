@@ -1,0 +1,68 @@
+[
+  {
+    "id": "preicfes-app",
+    "title": "PreICFES App",
+    "description": "Plataforma de entrenamiento interactivo, simulacros inteligentes y análisis de resultados para pruebas de Estado ICFES.",
+    "extendedDescription": "SaaS educativo con módulos de simulacros adaptativos, análisis de rendimiento por área, gamificación y recomendaciones personalizadas con IA para preparación a pruebas Saber 11.",
+    "category": "SaaS Educativo",
+    "stack": ["Next.js", "Supabase", "TypeScript", "Tailwind CSS", "OpenAI"],
+    "githubUrl": "https://github.com/madfer93/preicfes-app",
+    "demoUrl": "https://preicfes.app/",
+    "author": "walterparradocorredor-stack"
+  },
+  {
+    "id": "fundetec-institucional",
+    "title": "Fundetec Institucional",
+    "description": "Portal principal de educación técnica y académica con admisiones, chat IA ErIA integrado y gestión de programas.",
+    "extendedDescription": "Plataforma institucional completa con módulos de admisiones online, chat de IA ErIA entrenado con información académica, gestión de programas técnicos y portales de egresados.",
+    "category": "Portal Educativo",
+    "stack": ["Next.js", "PostgreSQL", "TypeScript", "Supabase", "Gemini AI"],
+    "githubUrl": "https://github.com/madfer93/fundetec-institucional",
+    "demoUrl": "https://fundetec.edu.co/",
+    "author": "walterparradocorredor-stack"
+  },
+  {
+    "id": "jowhalth-academy",
+    "title": "Jowhalth Academy",
+    "description": "Academia online de salud, bienestar y fitness con cursos certificados, comunidad y tutor de IA integrado.",
+    "extendedDescription": "Plataforma de aprendizaje en salud y bienestar con cursos en video, certificaciones digitales, comunidad activa y Jowhalth Tutor AI para resolución de dudas y orientación personalizada.",
+    "category": "EdTech / Salud",
+    "stack": ["Next.js", "Supabase", "Stripe", "TypeScript", "OpenAI"],
+    "githubUrl": "https://github.com/madfer93/jowhalth-academy",
+    "demoUrl": "https://jowhalthacademy.com/",
+    "author": "walterparradocorredor-stack"
+  },
+  {
+    "id": "rentun-group",
+    "title": "Rentun Group",
+    "description": "Plataforma inmobiliaria de arrendamiento, gestión de propiedades y análisis de mercado con IA.",
+    "extendedDescription": "Sistema integral de gestión inmobiliaria con listado de propiedades, herramientas de análisis de rentabilidad, firma digital de contratos y panel de propietarios e inquilinos.",
+    "category": "PropTech",
+    "stack": ["Next.js", "Supabase", "Google Maps API", "TypeScript", "Tailwind"],
+    "githubUrl": "https://github.com/madfer93/rentun-group",
+    "demoUrl": "https://www.rentungroup.com/",
+    "author": "walterparradocorredor-stack"
+  },
+  {
+    "id": "alcanza-una-beca",
+    "title": "Alcanza Una Beca",
+    "description": "Plataforma de orientación, convocatorias y acompañamiento para acceder a becas de educación superior.",
+    "extendedDescription": "Directorio de becas nacionales e internacionales con filtros inteligentes, guías de aplicación, orientación con IA y seguimiento de convocatorias activas para estudiantes colombianos.",
+    "category": "Becas & EdTech",
+    "stack": ["Next.js", "Supabase", "TypeScript", "Tailwind CSS"],
+    "githubUrl": "https://github.com/madfer93/alcanza-una-beca",
+    "demoUrl": "https://alcanzaunabeca.org",
+    "author": "walterparradocorredor-stack"
+  },
+  {
+    "id": "cedula-360",
+    "title": "Cédula 360 Tech",
+    "description": "Suite de herramientas de análisis de identidad, geointeligencia, traducción y monitoreo de datos públicos.",
+    "extendedDescription": "Plataforma multi-herramienta con módulos de DeepMap (análisis territorial), Translate (traducción IA), Pulse (monitoreo de datos) y consultas de información pública con IA.",
+    "category": "GovTech & Datos",
+    "stack": ["Next.js", "Python", "Google Maps", "OpenAI", "TypeScript"],
+    "githubUrl": "https://github.com/madfer93/cedula-360",
+    "demoUrl": "https://cedula360.tech",
+    "author": "walterparradocorredor-stack"
+  }
+]

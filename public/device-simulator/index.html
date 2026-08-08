@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J&M ResponsiveLab - Simulador de Dispositivos Online</title>
+    <meta name="description" content="Prueba la responsividad de tus sitios web y localhost en tiempo real con J&M ResponsiveLab. Simulador con múltiples mockups premium como iPhone, Android, iPad, smartwatches y POS.">
+    <meta name="keywords" content="simulador de dispositivos, responsive lab, diseño responsivo, probar localhost, simulador iphone online, test web responsive, J&M Tech Solutions, Manuel Madrid">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar" id="step-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-accent">J&M</span> Tech
+                </div>
+                <div class="sub-logo">ResponsiveLab</div>
+            </div>
+
+            <!-- Server Guide & Localhost Tip -->
+            <div class="sidebar-section" id="step-localhost-info" style="padding: 16px 24px; border-bottom: 1px solid var(--border-color); background: rgba(99, 102, 241, 0.03);">
+                <p style="font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4; margin-bottom: 10px;">
+                    <i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 4px; color: var(--accent-secondary);"></i>
+                    Para proyectos locales, asegúrate de tener corriendo tu localhost.
+                </p>
+                <button id="btn-open-cors-guide" class="tour-trigger-btn" style="font-size: 11px; padding: 8px; width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i data-lucide="server" style="width: 12px; height: 12px;"></i> Guía de Servidores Locales
+                </button>
+            </div>
+
+            <!-- URL Input Section -->
+            <div class="sidebar-section" id="step-url-section">
+                <label for="url-input" class="section-title">Dirección del Proyecto</label>
+                <div class="url-input-container">
+                    <input type="url" id="url-input" placeholder="http://localhost:3000" value="http://localhost:3000">
+                    <button id="btn-refresh" title="Recargar todos los dispositivos">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+                    <button id="btn-go" title="Cargar URL">
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+                <div class="quick-links">
+                    <button class="quick-link-btn" data-url="http://localhost:3000">
+                        <i data-lucide="terminal"></i> Localhost (:3000)
+                    </button>
+                    <button class="quick-link-btn" data-url="http://127.0.0.1:5500">
+                        <i data-lucide="server"></i> Live Server (:5500)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Workspace Settings -->
+            <div class="sidebar-section" id="step-workspace-settings">
+                <div class="section-title">Configuración del Área</div>
+                
+                <!-- Zoom Control -->
+                <div class="control-group" id="step-zoom-control">
+                    <div class="control-label">
+                        <span>Escala de Visualización</span>
+                        <span id="zoom-value">75%</span>
+                    </div>
+                    <div class="range-container">
+                        <i data-lucide="zoom-out" class="range-icon"></i>
+                        <input type="range" id="zoom-range" min="30" max="120" value="75">
+                        <i data-lucide="zoom-in" class="range-icon"></i>
+                    </div>
+                </div>
+
+                <!-- Orientation Toggle -->
+                <div class="control-group">
+                    <span class="control-label-text">Orientación Global</span>
+                    <div class="btn-group">
+                        <button id="btn-portrait" class="active" title="Modo Retrato">
+                            <i data-lucide="smartphone"></i> Vertical
+                        </button>
+                        <button id="btn-landscape" title="Modo Paisaje">
+                            <i data-lucide="smartphone" style="transform: rotate(90deg);"></i> Horizontal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- View Layout Toggle -->
+                <div class="control-group" id="step-layout-toggle">
+                    <span class="control-label-text">Vista del Área de Trabajo</span>
+                    <div class="btn-group">
+                        <button id="view-grid" class="active">
+                            <i data-lucide="grid"></i> Cuadrícula
+                        </button>
+                        <button id="view-single">
+                            <i data-lucide="maximize-2"></i> Individual
+                        </button>
+                    </div>
+                    <select id="single-device-select" class="device-select hidden" style="margin-top: 8px; width: 100%;">
+                    </select>
+                </div>
+            </div>
+
+            <!-- Accent Color Theme Picker -->
+            <div class="sidebar-section" id="step-theme-picker">
+                <div class="section-title">Tema de Acento (Personalizar)</div>
+                <div class="theme-picker">
+                    <button class="theme-btn active" data-theme="indigo" style="background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);" title="Índigo / Cian (J&M)"></button>
+                    <button class="theme-btn" data-theme="emerald" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);" title="Verde (WhatsApp)"></button>
+                    <button class="theme-btn" data-theme="cyberpunk" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);" title="Rosa / Violeta (Cyberpunk)"></button>
+                    <button class="theme-btn" data-theme="amber" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);" title="Ámbar / Naranja (POS)"></button>
+                    <button class="theme-btn" data-theme="neon" style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);" title="Cian / Azul Neón"></button>
+                </div>
+            </div>
+
+            <!-- Device Selector -->
+            <div class="sidebar-section" id="step-device-selector">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <span>Dispositivos Activos</span>
+                    <button id="btn-add-custom-device" class="action-btn" style="padding: 2px 8px; font-size: 11px; border-radius: 4px;" title="Añadir dispositivo personalizado">
+                        <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px; display: inline-block; vertical-align: middle;"></i> Nuevo
+                    </button>
+                </div>
+                <div class="device-list" id="device-checkbox-list">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="workspace-wrapper">
+            <!-- Top info bar -->
+            <header class="workspace-header">
+                <div class="url-badge">
+                    <i data-lucide="globe"></i>
+                    <span id="current-url-display">http://localhost:3000</span>
+                </div>
+
+                <!-- Privacy & Suggestions Badge -->
+                <div class="privacy-header-badge" id="step-privacy-badge">
+                    <i data-lucide="shield-check" class="privacy-icon"></i>
+                    <span class="privacy-text"><strong>100% Privado:</strong> No capturamos información</span>
+                    <span class="privacy-divider">|</span>
+                    <a href="https://wa.me/573045788873?text=Hola%20Manuel%2C%20tengo%20una%20sugerencia%20para%20el%20Simulador%20de%20Dispositivos." 
+                       target="_blank" rel="noopener noreferrer" class="privacy-link" style="color: #25D366;">
+                        <i data-lucide="message-square" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Sugerencias (+57 304 578 8873)
+                    </a>
+                    <span class="privacy-divider">|</span>
+                    <a href="#" id="btn-start-tour" class="privacy-link" style="color: var(--accent-primary);">
+                        <i data-lucide="help-circle" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Iniciar Guía
+                    </a>
+                    <span class="privacy-divider">|</span>
+                    <a href="#" id="btn-theme-toggle" class="privacy-link" style="color: var(--text-muted);">
+                        <i data-lucide="moon" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Modo Noche
+                    </a>
+                </div>
+
+                <div class="actions">
+                    <button class="action-btn" id="btn-open-external" title="Abrir en pestaña nueva">
+                        <i data-lucide="external-link"></i> Abrir directo
+                    </button>
+                </div>
+            </header>
+
+            <!-- Diagnostic Toolbar -->
+            <div class="workspace-toolbar" id="step-devtools-bar">
+                <div class="toolbar-group">
+                    <span class="toolbar-title">
+                        <i data-lucide="cpu" style="width: 14px; height: 14px; color: var(--accent-secondary); display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+                        J&M DevTools
+                    </span>
+                    <span class="toolbar-divider">|</span>
+                    <button class="toolbar-btn" id="btn-xray" title="Resaltar todos los elementos HTML para detectar desbordamientos">
+                        <i data-lucide="sparkles"></i> Modo Rayos X
+                    </button>
+                    <button class="toolbar-btn" id="btn-keyboard" title="Simular la apertura del teclado móvil en pantallas táctiles">
+                        <i data-lucide="keyboard"></i> Teclado Virtual
+                    </button>
+                    <button class="toolbar-btn" id="btn-touch-cursor" title="Simular área de toque con un cursor circular de 44px">
+                        <i data-lucide="fingerprint"></i> Cursor Táctil
+                    </button>
+                </div>
+                
+                <div class="toolbar-group">
+                    <span class="toolbar-divider">|</span>
+                    <div class="toolbar-select-container">
+                        <i data-lucide="eye" style="width: 14px; height: 14px; color: var(--text-muted); display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+                        <select id="select-daltonism" class="toolbar-select" title="Simulador de Accesibilidad Visual">
+                            <option value="normal">Visión Normal</option>
+                            <option value="deuteranopia">Deuteranopía (Verde)</option>
+                            <option value="protanopia">Protanopía (Rojo)</option>
+                            <option value="tritanopia">Tritanopía (Azul)</option>
+                            <option value="achromatopsia">Monocromatismo</option>
+                            <option value="blur">Visión Borrosa</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace where simulated devices live -->
+            <div class="workspace" id="workspace">
+                <div class="devices-container" id="devices-container">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Onboarding Tour Modal -->
+    <div id="tour-overlay" class="tour-overlay hidden">
+        <div class="tour-card glassmorphic" id="tour-card">
+            <div class="tour-progress">
+                <span class="tour-step-dot active"></span>
+                <span class="tour-step-dot"></span>
+                <span class="tour-step-dot"></span>
+                <span class="tour-step-dot"></span>
+                <span class="tour-step-dot"></span>
+                <span class="tour-step-dot"></span>
+                <span class="tour-step-dot"></span>
+            </div>
+            <h4 id="tour-title">Bienvenido a J&M ResponsiveLab</h4>
+            <p id="tour-desc">Esta guía te enseñará cómo probar tus diseños responsivos paso a paso.</p>
+            <div class="tour-footer">
+                <button id="tour-prev" class="tour-btn btn-secondary hidden">Atrás</button>
+                <button id="tour-skip" class="tour-btn btn-secondary">Omitir</button>
+                <button id="tour-next" class="tour-btn btn-primary">Siguiente</button>
+            </div>
+            <div class="tour-arrow" id="tour-arrow"></div>
+        </div>
+    </div>
+
+    <!-- Custom Device Modal -->
+    <div id="device-modal" class="modal-overlay hidden">
+        <div class="modal-card glassmorphic">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="smartphone" style="width: 18px; height: 18px; color: var(--accent-primary);"></i>
+                    Nuevo Dispositivo
+                </h3>
+                <button class="modal-close" id="btn-close-device-modal" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="custom-device-name" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Nombre del Dispositivo</label>
+                    <input type="text" id="custom-device-name" placeholder="Ej. Motorola Moto G">
+                </div>
+                <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="custom-device-width" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Ancho (px)</label>
+                        <input type="number" id="custom-device-width" placeholder="360" min="100" max="3000">
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="custom-device-height" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Alto (px)</label>
+                        <input type="number" id="custom-device-height" placeholder="640" min="100" max="3000">
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="custom-device-type" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Tipo de Dispositivo</label>
+                    <select id="custom-device-type" class="device-select" style="width: 100%; height: 36px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; padding: 0 8px; font-size: 13px;">
+                        <option value="mobile">Móvil</option>
+                        <option value="tablet">Tablet</option>
+                        <option value="watch">Reloj Inteligente</option>
+                        <option value="desktop">Escritorio / Laptop</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                <button id="btn-cancel-device" class="tour-btn btn-secondary" style="padding: 8px 16px;">Cancelar</button>
+                <button id="btn-save-device" class="tour-btn btn-primary" style="padding: 8px 16px;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORS & Server Guide Modal -->
+    <div id="cors-guide-modal" class="modal-overlay hidden">
+        <div class="modal-card glassmorphic" style="width: 500px; max-width: 95%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="help-circle" style="width: 18px; height: 18px; color: var(--accent-secondary);"></i>
+                    Guía de Servidores Locales & CORS
+                </h3>
+                <button class="modal-close" id="btn-close-cors-modal" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="font-size: 13px; line-height: 1.6; max-height: 60vh; overflow-y: auto; color: var(--text-muted); padding-right: 4px;">
+                <p style="margin-bottom: 14px; color: var(--text-main);">Para aprovechar características avanzadas como la <strong>Sincronización de Scroll</strong> y el <strong>Modo Rayos X</strong>, el navegador requiere que el simulador y tu proyecto compartan el mismo puerto y dominio (CORS).</p>
+                <h4 style="color: var(--accent-primary); font-weight: 600; font-size: 13px; margin-top: 16px; margin-bottom: 6px;">1. HTML Estático (VS Code Live Server)</h4>
+                <p style="margin-bottom: 8px;">Si tu proyecto es HTML estático y lo abres con Live Server (ej. en el puerto <code>5500</code>):</p>
+                <ul style="margin-left: 18px; margin-bottom: 12px; list-style-type: disc; display: flex; flex-direction: column; gap: 4px;">
+                    <li>Abre el simulador usando la URL de tu Live Server: <br><code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 11px;">http://127.0.0.1:5500/device-simulator/index.html</code></li>
+                    <li>Ingresa la URL de tu sitio en el buscador del simulador.</li>
+                </ul>
+            </div>
+            <div class="modal-footer" style="display: flex; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">
+                <button id="btn-close-cors-guide" class="tour-btn btn-primary" style="width: 100%; padding: 8px;">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+:root {
+  --background: #04060a;
+  --foreground: #ededed;
+}
+
+body {
+  background: #04060a;
+  color: #ededed;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  overflow-x: hidden;
+}
+
+/* CUSTOM COSMIC ANIMATIONS & KEYFRAMES */
+@keyframes float1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+  50% { transform: translateY(-16px) rotate(2deg) scale(1.03); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+  50% { transform: translateY(18px) rotate(-2deg) scale(1.04); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.35; transform: scale(1); filter: blur(120px); }
+  50% { opacity: 0.75; transform: scale(1.15); filter: blur(150px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-float-1 {
+  animation: float1 7s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float2 9s ease-in-out infinite;
+}
+
+.animate-pulse-cosmic {
+  animation: pulseGlow 10s ease-in-out infinite;
+}
+
+.shimmer-gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 25%, #a855f7 50%, #f43f5e 75%, #a9843c 100%);
+  background-size: 300% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
+}
+
+.shimmer-gold-text {
+  background: linear-gradient(135deg, #ffffff 0%, #a9843c 50%, #f59e0b 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+}
+
+.glass-cosmic-card {
+  background: rgba(10, 15, 30, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-cosmic-card-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-cosmic-card-hover:hover {
+  transform: translateY(-8px) scale(1.015);
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.25), 0 0 35px rgba(56, 189, 248, 0.2);
+}
+
+.bg-grid-cosmic {
+  background-size: 40px 40px;
+  background-image: 
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+}

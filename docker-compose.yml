@@ -1,0 +1,25 @@
+services:
+  hub-front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hub-front
+    restart: always
+    ports:
+      - "3050:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Internal Supabase URL (server-side only, inside Docker network)
+      - SUPABASE_INTERNAL_URL=http://supabase-kong:8000
+    networks:
+      - default
+      - supabase_default
+
+networks:
+  default:
+    name: hub-central-interactivo_default
+  supabase_default:
+    external: true
