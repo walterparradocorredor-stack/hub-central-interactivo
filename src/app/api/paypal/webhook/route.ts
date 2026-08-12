@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { namecheapClient } from '@/lib/namecheap';
 import { cloudflareClient, DEFAULT_TARGET_IP } from '@/lib/cloudflare';
+import { recordDomainPurchase } from '@/lib/supabaseAdmin';
 import { sendTelegramNotification } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
@@ -48,14 +49,29 @@ export async function POST(request: NextRequest) {
           registrationResult = `✅ *Dominio Registrado Exitosamente en Namecheap* (Orden: ${regResponse.orderId})`;
 
           const provision = await cloudflareClient.provisionPurchasedDomain(domainName, DEFAULT_TARGET_IP);
+          let dnsConnected = false;
           if (provision.success && provision.nameServers?.length) {
             const nsResult = await namecheapClient.setCustomNameservers(domainName, provision.nameServers);
+            dnsConnected = nsResult.success;
             dnsResult = nsResult.success
               ? `✅ *DNS conectado a Cloudflare* (NS: ${provision.nameServers.join(', ')})`
               : `⚠️ *Zona creada en Cloudflare pero falló apuntar nameservers:* ${nsResult.error}`;
           } else {
             dnsResult = `⚠️ *Error creando zona DNS en Cloudflare:* ${provision.error || 'Desconocido'}`;
           }
+
+          await recordDomainPurchase({
+            buyerEmail: payerEmail,
+            domainName,
+            registrarOrderId: regResponse.orderId,
+            paymentMethod: 'paypal',
+            transactionId,
+            amount: Number(amountUsd) || undefined,
+            currency: 'USD',
+            cloudflareZoneId: provision.zoneId,
+            nameServers: provision.nameServers,
+            dnsConnected
+          });
         } else {
           registrationResult = `⚠️ *Error Namecheap:* ${regResponse.error || 'Requiere registro manual'}`;
         }

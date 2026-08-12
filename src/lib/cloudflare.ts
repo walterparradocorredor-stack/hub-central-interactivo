@@ -77,7 +77,7 @@ export class CloudflareClient {
   }
 
   private async findDnsRecord(zoneId: string, name: string, type: string): Promise<{ id: string } | null> {
-    const token = this.zoneToken || this.accountToken;
+    const token = this.accountToken || this.zoneToken;
     const response = await fetch(
       `${CF_BASE_URL}/zones/${zoneId}/dns_records?type=${type}&name=${encodeURIComponent(name)}`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -93,7 +93,7 @@ export class CloudflareClient {
     zoneId: string,
     params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number }
   ): Promise<CloudflareDnsRecordResult> {
-    const token = this.zoneToken || this.accountToken;
+    const token = this.accountToken || this.zoneToken;
     if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
 
     try {
@@ -126,6 +126,109 @@ export class CloudflareClient {
       return { success: false, error: errorMsg };
     } catch (err: any) {
       console.error('Error al crear registro DNS en Cloudflare:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Lista los registros DNS reales de una zona.
+   */
+  async listDnsRecords(zoneId: string): Promise<{
+    success: boolean;
+    records?: Array<{ id: string; type: string; name: string; content: string; ttl: number; proxied: boolean }>;
+    error?: string;
+  }> {
+    const token = this.accountToken || this.zoneToken;
+    if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
+
+    try {
+      const response = await fetch(`${CF_BASE_URL}/zones/${zoneId}/dns_records?per_page=100`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          success: true,
+          records: (data.result || []).map((r: any) => ({
+            id: r.id,
+            type: r.type,
+            name: r.name,
+            content: r.content,
+            ttl: r.ttl,
+            proxied: !!r.proxied
+          }))
+        };
+      }
+
+      const errorMsg = data.errors?.map((e: any) => e.message).join(', ') || 'Error listando registros DNS';
+      return { success: false, error: errorMsg };
+    } catch (err: any) {
+      console.error('Error al listar registros DNS en Cloudflare:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Actualiza un registro DNS existente.
+   */
+  async updateDnsRecord(
+    zoneId: string,
+    recordId: string,
+    params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number }
+  ): Promise<CloudflareDnsRecordResult> {
+    const token = this.accountToken || this.zoneToken;
+    if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
+
+    try {
+      const response = await fetch(`${CF_BASE_URL}/zones/${zoneId}/dns_records/${recordId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: params.type,
+          name: params.name,
+          content: params.content,
+          ttl: params.ttl ?? 1,
+          proxied: params.proxied ?? true
+        })
+      });
+      const data = await response.json();
+
+      if (data.success && data.result) {
+        return { success: true, recordId: data.result.id };
+      }
+
+      const errorMsg = data.errors?.map((e: any) => e.message).join(', ') || 'Error actualizando registro DNS';
+      return { success: false, error: errorMsg };
+    } catch (err: any) {
+      console.error('Error al actualizar registro DNS en Cloudflare:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Elimina un registro DNS.
+   */
+  async deleteDnsRecord(zoneId: string, recordId: string): Promise<{ success: boolean; error?: string }> {
+    const token = this.accountToken || this.zoneToken;
+    if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
+
+    try {
+      const response = await fetch(`${CF_BASE_URL}/zones/${zoneId}/dns_records/${recordId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+
+      if (data.success) return { success: true };
+
+      const errorMsg = data.errors?.map((e: any) => e.message).join(', ') || 'Error eliminando registro DNS';
+      return { success: false, error: errorMsg };
+    } catch (err: any) {
+      console.error('Error al eliminar registro DNS en Cloudflare:', err);
       return { success: false, error: err.message };
     }
   }

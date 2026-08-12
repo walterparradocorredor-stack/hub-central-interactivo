@@ -20,32 +20,20 @@ interface UserDomain {
   status: 'active' | 'expiring_soon' | 'expired';
   expiryDate: string;
   sslActive: boolean;
-  dnsRecords: DNSRecord[];
 }
-
-const MOCK_DOMAINS: UserDomain[] = [
-  {
-    id: 'dom-1',
-    domainName: 'miempresa-colombia.com',
-    status: 'active',
-    expiryDate: '2027-08-01',
-    sslActive: true,
-    dnsRecords: [
-      { id: 'rec-1', type: 'A', name: '@', value: '31.97.145.8', ttl: 3600 },
-      { id: 'rec-2', type: 'CNAME', name: 'www', value: 'miempresa-colombia.com', ttl: 3600 },
-      { id: 'rec-3', type: 'MX', name: '@', value: 'mail.privateemail.com', ttl: 3600 }
-    ]
-  }
-];
 
 export default function PanelDominiosPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [domains, setDomains] = useState<UserDomain[]>(MOCK_DOMAINS);
+  const [domains, setDomains] = useState<UserDomain[]>([]);
+  const [domainsLoading, setDomainsLoading] = useState(true);
   const [selectedDomain, setSelectedDomain] = useState<UserDomain | null>(null);
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
   const [editingDns, setEditingDns] = useState<DNSRecord[]>([]);
+  const [dnsLoading, setDnsLoading] = useState(false);
+  const [dnsError, setDnsError] = useState<string | null>(null);
   const [savingDns, setSavingDns] = useState(false);
   const [dnsSuccessMessage, setDnsSuccessMessage] = useState<string | null>(null);
 
@@ -53,31 +41,92 @@ export default function PanelDominiosPage() {
     async function checkSession() {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        // Redirigir a login si no hay sesión
         router.push('/login?redirect=/panel/dominios');
       } else {
         setUser(data.session.user);
+        setAccessToken(data.session.access_token);
       }
       setLoading(false);
     }
     checkSession();
   }, [router]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchDomains() {
+      setDomainsLoading(true);
+      const { data, error } = await supabase
+        .from('domain_purchases')
+        .select('id, domain_name, dns_status, expires_at')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const mapped: UserDomain[] = data.map((row: any) => {
+          const expiry = row.expires_at ? new Date(row.expires_at) : null;
+          const daysLeft = expiry ? Math.floor((expiry.getTime() - Date.now()) / 86400000) : null;
+          let status: UserDomain['status'] = 'active';
+          if (daysLeft !== null) {
+            if (daysLeft < 0) status = 'expired';
+            else if (daysLeft <= 30) status = 'expiring_soon';
+          }
+          return {
+            id: row.id,
+            domainName: row.domain_name,
+            status,
+            expiryDate: row.expires_at || 'N/A',
+            sslActive: row.dns_status === 'connected'
+          };
+        });
+        setDomains(mapped);
+      }
+      setDomainsLoading(false);
+    }
+
+    fetchDomains();
+  }, [user]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
   };
 
-  const handleOpenDnsModal = (dom: UserDomain) => {
+  const handleOpenDnsModal = async (dom: UserDomain) => {
     setSelectedDomain(dom);
-    setEditingDns([...dom.dnsRecords]);
     setIsDnsModalOpen(true);
     setDnsSuccessMessage(null);
+    setDnsError(null);
+    setDnsLoading(true);
+    setEditingDns([]);
+
+    try {
+      const res = await fetch(`/api/dominios/dns?domainId=${dom.id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setDnsError(json.error || 'No se pudieron cargar los registros DNS');
+      } else {
+        const records: DNSRecord[] = (json.records || []).map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          name: r.name,
+          value: r.content,
+          ttl: r.ttl
+        }));
+        setEditingDns(records);
+      }
+    } catch (err: any) {
+      setDnsError(err.message);
+    } finally {
+      setDnsLoading(false);
+    }
   };
 
   const handleAddDnsRecord = () => {
     const newRecord: DNSRecord = {
-      id: `rec-${Date.now()}`,
+      id: `new-${Date.now()}`,
       type: 'A',
       name: '',
       value: '',
@@ -91,18 +140,36 @@ export default function PanelDominiosPage() {
   };
 
   const handleSaveDns = async () => {
+    if (!selectedDomain) return;
     setSavingDns(true);
     setDnsSuccessMessage(null);
+    setDnsError(null);
 
-    // Simular guardado de registros DNS en Namecheap/VPS
-    setTimeout(() => {
-      if (selectedDomain) {
-        setDomains(prev => prev.map(d => d.id === selectedDomain.id ? { ...d, dnsRecords: editingDns } : d));
+    try {
+      const res = await fetch('/api/dominios/dns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          domainId: selectedDomain.id,
+          records: editingDns.map(r => ({ id: r.id, type: r.type, name: r.name, content: r.value, ttl: r.ttl }))
+        })
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setDnsError((json.errors || [json.error]).filter(Boolean).join('; ') || 'Error al guardar los registros DNS');
+      } else {
+        setDnsSuccessMessage('¡Registros DNS actualizados y propagados con éxito!');
+        setTimeout(() => setIsDnsModalOpen(false), 1200);
       }
+    } catch (err: any) {
+      setDnsError(err.message);
+    } finally {
       setSavingDns(false);
-      setDnsSuccessMessage('¡Registros DNS actualizados y propagados con éxito!');
-      setTimeout(() => setIsDnsModalOpen(false), 1200);
-    }, 800);
+    }
   };
 
   if (loading) {
@@ -200,6 +267,20 @@ export default function PanelDominiosPage() {
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-white mb-4">Dominios Asignados</h2>
 
+          {domainsLoading && (
+            <div className="flex items-center gap-3 text-slate-400 text-sm py-8">
+              <RefreshCw className="w-4 h-4 animate-spin" /> Cargando tus dominios...
+            </div>
+          )}
+
+          {!domainsLoading && domains.length === 0 && (
+            <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+              <Globe className="w-8 h-8 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-300 font-semibold mb-1">Todavía no tienes dominios registrados con este correo.</p>
+              <p className="text-slate-500 text-sm">Si acabas de comprar uno, puede tardar unos minutos en aparecer aquí.</p>
+            </div>
+          )}
+
           {domains.map((dom) => (
             <div key={dom.id} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
@@ -209,13 +290,30 @@ export default function PanelDominiosPage() {
                 <div>
                   <div className="flex items-center gap-3">
                     <h3 className="text-xl font-bold text-white">{dom.domainName}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Activo
-                    </span>
+                    {dom.status === 'active' && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Activo
+                      </span>
+                    )}
+                    {dom.status === 'expiring_soon' && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Por vencer
+                      </span>
+                    )}
+                    {dom.status === 'expired' && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Vencido
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
                     <span>Vence: <strong className="text-slate-200">{dom.expiryDate}</strong></span>
-                    <span>SSL Enterprise: <strong className="text-emerald-400">Habilitado (HTTPS)</strong></span>
+                    <span>
+                      DNS / SSL:{' '}
+                      <strong className={dom.sslActive ? 'text-emerald-400' : 'text-amber-400'}>
+                        {dom.sslActive ? 'Conectado (Cloudflare)' : 'Pendiente de conectar'}
+                      </strong>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -264,54 +362,66 @@ export default function PanelDominiosPage() {
               </div>
             )}
 
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-              {editingDns.map((rec) => (
-                <div key={rec.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2 text-xs">
-                  <select
-                    value={rec.type}
-                    onChange={(e) => {
-                      const val = e.target.value as any;
-                      setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, type: val } : r));
-                    }}
-                    className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1.5 font-bold outline-none"
-                  >
-                    <option value="A">A</option>
-                    <option value="CNAME">CNAME</option>
-                    <option value="MX">MX</option>
-                    <option value="TXT">TXT</option>
-                  </select>
+            {dnsError && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" /> {dnsError}
+              </div>
+            )}
 
-                  <input
-                    type="text"
-                    placeholder="Host (ej: @, www)"
-                    value={rec.name}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, name: val } : r));
-                    }}
-                    className="w-24 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none"
-                  />
+            {dnsLoading ? (
+              <div className="flex items-center gap-3 text-slate-400 text-sm py-8 justify-center">
+                <RefreshCw className="w-4 h-4 animate-spin" /> Consultando registros reales en Cloudflare...
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {editingDns.map((rec) => (
+                  <div key={rec.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2 text-xs">
+                    <select
+                      value={rec.type}
+                      onChange={(e) => {
+                        const val = e.target.value as any;
+                        setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, type: val } : r));
+                      }}
+                      className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1.5 font-bold outline-none"
+                    >
+                      <option value="A">A</option>
+                      <option value="CNAME">CNAME</option>
+                      <option value="MX">MX</option>
+                      <option value="TXT">TXT</option>
+                    </select>
 
-                  <input
-                    type="text"
-                    placeholder="Valor / IP (ej: 31.97.145.8)"
-                    value={rec.value}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, value: val } : r));
-                    }}
-                    className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none font-mono text-[11px]"
-                  />
+                    <input
+                      type="text"
+                      placeholder="Host (ej: @, www)"
+                      value={rec.name}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, name: val } : r));
+                      }}
+                      className="w-24 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none"
+                    />
 
-                  <button
-                    onClick={() => handleRemoveDnsRecord(rec.id)}
-                    className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <input
+                      type="text"
+                      placeholder="Valor / IP (ej: 31.97.145.8)"
+                      value={rec.value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, value: val } : r));
+                      }}
+                      className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none font-mono text-[11px]"
+                    />
+
+                    <button
+                      onClick={() => handleRemoveDnsRecord(rec.id)}
+                      className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-center justify-between border-t border-slate-800 pt-4">
               <button
@@ -331,8 +441,8 @@ export default function PanelDominiosPage() {
 
                 <button
                   onClick={handleSaveDns}
-                  disabled={savingDns}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition-all"
+                  disabled={savingDns || dnsLoading}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
                 >
                   {savingDns ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Guardar Cambios DNS
