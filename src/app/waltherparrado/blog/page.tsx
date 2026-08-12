@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Columnas de Opinión — Dr. Walther Parrado",
     description: "Espacio de debate, ideas e innovación en la gestión educativa colombiana.",
-    images: [{ url: "/Portada-colunmnas-2.webp" }],
+    images: [{ url: "/wp-logo.png" }],
   },
 };
 
