@@ -29,8 +29,8 @@ export class WompiService {
   private integritySecret: string;
 
   constructor() {
-    this.publicKey = process.env.WOMPI_PUBLIC_KEY || 'pub_prod_jK8DLVA15tx6D05Fu46zSCzzg3a3tqgs';
-    this.integritySecret = process.env.WOMPI_INTEGRITY_SECRET || 'prod_integrity_iwRqf1yMxeEuZLb42LqGjr6OkH3p3xiW';
+    this.publicKey = process.env.WOMPI_PUBLIC_KEY || '';
+    this.integritySecret = process.env.WOMPI_INTEGRITY_SECRET || '';
   }
 
   /**
