@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendTelegramNotification } from '@/lib/notifications';
 import { namecheapClient } from '@/lib/namecheap';
+import { cloudflareClient, DEFAULT_TARGET_IP } from '@/lib/cloudflare';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +25,8 @@ export async function POST(request: NextRequest) {
     }
 
     let registrationResult = 'ℹ️ Registro pendiente (comprobar en panel)';
-    
+    let dnsResult = 'ℹ️ N/A';
+
     // Si viene un dominio explícito y el pago está APROBADO, intentar registro en Namecheap
     if (status === 'APPROVED' && domainName && domainName.includes('.')) {
       const regResponse = await namecheapClient.registerDomain(domainName, {
@@ -41,6 +43,16 @@ export async function POST(request: NextRequest) {
 
       if (regResponse.success) {
         registrationResult = `✅ *Dominio Registrado con Éxito en Namecheap* (Orden: ${regResponse.orderId})`;
+
+        const provision = await cloudflareClient.provisionPurchasedDomain(domainName, DEFAULT_TARGET_IP);
+        if (provision.success && provision.nameServers?.length) {
+          const nsResult = await namecheapClient.setCustomNameservers(domainName, provision.nameServers);
+          dnsResult = nsResult.success
+            ? `✅ *DNS conectado a Cloudflare* (NS: ${provision.nameServers.join(', ')})`
+            : `⚠️ *Zona creada en Cloudflare pero falló apuntar nameservers:* ${nsResult.error}`;
+        } else {
+          dnsResult = `⚠️ *Error creando zona DNS en Cloudflare:* ${provision.error || 'Desconocido'}`;
+        }
       } else {
         registrationResult = `⚠️ *Error al registrar en Namecheap:* ${regResponse.error || 'Requiere registro manual'}`;
       }
@@ -62,12 +74,13 @@ export async function POST(request: NextRequest) {
       `💳 *Método de Pago:* ${payment_method_type}\n` +
       `👤 *Email Cliente:* ${customer_email || 'No proporcionado'}\n` +
       `⚙️ *Registro Auto:* ${registrationResult}\n` +
+      `🌐 *DNS / Cloudflare:* ${dnsResult}\n` +
       `💵 *Saldo Namecheap Disponible:* ${balanceText}\n` +
       `⏰ *Fecha:* ${new Date().toLocaleString('es-CO')}`;
 
     await sendTelegramNotification(alertMessage);
 
-    return NextResponse.json({ status: 'received', transactionId: id, reference, domainName, registrationResult });
+    return NextResponse.json({ status: 'received', transactionId: id, reference, domainName, registrationResult, dnsResult });
   } catch (error: any) {
     console.error('Error procesando Webhook de Wompi:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -61,8 +61,8 @@ export class NamecheapClient {
   private useSandbox: boolean;
 
   constructor() {
-    this.apiUser = process.env.NAMECHEAP_API_USER || 'Walpaco';
-    this.apiKey = process.env.NAMECHEAP_API_KEY || 'addefe7ecc7f4f3b8d28e74cc71241d9';
+    this.apiUser = process.env.NAMECHEAP_API_USER || '';
+    this.apiKey = process.env.NAMECHEAP_API_KEY || '';
     this.userName = process.env.NAMECHEAP_USERNAME || this.apiUser;
     this.clientIp = process.env.NAMECHEAP_CLIENT_IP || '31.97.145.8';
     this.useSandbox = process.env.NAMECHEAP_USE_SANDBOX === 'true';
@@ -170,6 +170,56 @@ export class NamecheapClient {
       return { success: false, error: errorMsg };
     } catch (err: any) {
       console.error('Error al registrar dominio en Namecheap:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Apunta los nameservers de un dominio ya registrado a un proveedor DNS externo
+   * (p. ej. los nameservers asignados por Cloudflare al crear una zona nueva).
+   */
+  async setCustomNameservers(domainName: string, nameservers: string[]): Promise<{ success: boolean; error?: string }> {
+    if (!this.apiKey) {
+      return { success: false, error: 'API Key no configurada' };
+    }
+
+    const [sld, ...tldParts] = domainName.split('.');
+    const tld = tldParts.join('.');
+
+    try {
+      const params = new URLSearchParams({
+        ApiUser: this.apiUser,
+        ApiKey: this.apiKey,
+        UserName: this.userName,
+        ClientIp: this.clientIp,
+        Command: 'namecheap.domains.dns.setCustom',
+        SLD: sld,
+        TLD: tld,
+        Nameservers: nameservers.join(',')
+      });
+
+      const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+
+      const xmlText = await response.text();
+      const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
+      const parsed = parser.parse(xmlText);
+
+      const result = parsed?.ApiResponse?.CommandResponse?.DomainDNSSetCustomResult;
+      const isUpdated = result?.['@_Update'] === 'true' || result?.['@_Update'] === true;
+
+      if (isUpdated) {
+        return { success: true };
+      }
+
+      const errors = parsed?.ApiResponse?.Errors?.Error;
+      const errorMsg = Array.isArray(errors) ? errors.map(e => e['#text'] || e).join(', ') : (errors?.['#text'] || errors || 'Error desconocido al actualizar nameservers');
+
+      return { success: false, error: errorMsg };
+    } catch (err: any) {
+      console.error('Error al actualizar nameservers en Namecheap:', err);
       return { success: false, error: err.message };
     }
   }
