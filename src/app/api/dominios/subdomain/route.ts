@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cloudflareClient, DEFAULT_TARGET_IP } from '@/lib/cloudflare';
 
-const BASE_DOMAIN = 'hub.waltherparrado.com';
+const BASE_DOMAIN = 'waltherparrado.com';
 
 export async function POST(request: NextRequest) {
   try {
