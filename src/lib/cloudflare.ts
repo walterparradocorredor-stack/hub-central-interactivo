@@ -91,7 +91,7 @@ export class CloudflareClient {
    */
   async createDnsRecord(
     zoneId: string,
-    params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number }
+    params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number; priority?: number }
   ): Promise<CloudflareDnsRecordResult> {
     const token = this.accountToken || this.zoneToken;
     if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
@@ -113,7 +113,8 @@ export class CloudflareClient {
           name: params.name,
           content: params.content,
           ttl: params.ttl ?? 1,
-          proxied: params.proxied ?? true
+          proxied: params.proxied ?? true,
+          ...(params.priority !== undefined ? { priority: params.priority } : {})
         })
       });
 
@@ -135,7 +136,7 @@ export class CloudflareClient {
    */
   async listDnsRecords(zoneId: string): Promise<{
     success: boolean;
-    records?: Array<{ id: string; type: string; name: string; content: string; ttl: number; proxied: boolean }>;
+    records?: Array<{ id: string; type: string; name: string; content: string; ttl: number; proxied: boolean; priority?: number }>;
     error?: string;
   }> {
     const token = this.accountToken || this.zoneToken;
@@ -156,7 +157,8 @@ export class CloudflareClient {
             name: r.name,
             content: r.content,
             ttl: r.ttl,
-            proxied: !!r.proxied
+            proxied: !!r.proxied,
+            priority: r.priority
           }))
         };
       }
@@ -175,7 +177,7 @@ export class CloudflareClient {
   async updateDnsRecord(
     zoneId: string,
     recordId: string,
-    params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number }
+    params: { type: string; name: string; content: string; proxied?: boolean; ttl?: number; priority?: number }
   ): Promise<CloudflareDnsRecordResult> {
     const token = this.accountToken || this.zoneToken;
     if (!token) return { success: false, error: 'Cloudflare API token no configurado' };
@@ -192,7 +194,8 @@ export class CloudflareClient {
           name: params.name,
           content: params.content,
           ttl: params.ttl ?? 1,
-          proxied: params.proxied ?? true
+          proxied: params.proxied ?? true,
+          ...(params.priority !== undefined ? { priority: params.priority } : {})
         })
       });
       const data = await response.json();

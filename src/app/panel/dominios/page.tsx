@@ -12,6 +12,7 @@ interface DNSRecord {
   name: string;
   value: string;
   ttl: number;
+  priority?: number;
 }
 
 interface UserDomain {
@@ -113,7 +114,8 @@ export default function PanelDominiosPage() {
           type: r.type,
           name: r.name,
           value: r.content,
-          ttl: r.ttl
+          ttl: r.ttl,
+          priority: r.priority
         }));
         setEditingDns(records);
       }
@@ -154,10 +156,14 @@ export default function PanelDominiosPage() {
         },
         body: JSON.stringify({
           domainId: selectedDomain.id,
-          records: editingDns.map(r => ({ id: r.id, type: r.type, name: r.name, content: r.value, ttl: r.ttl }))
+          records: editingDns.map(r => ({ id: r.id, type: r.type, name: r.name, content: r.value, ttl: r.ttl, priority: r.priority }))
         })
       });
       const json = await res.json();
+
+      if (Array.isArray(json.records)) {
+        setEditingDns(json.records.map((r: any) => ({ id: r.id, type: r.type, name: r.name, value: r.content, ttl: r.ttl, priority: r.priority })));
+      }
 
       if (!res.ok || !json.success) {
         setDnsError((json.errors || [json.error]).filter(Boolean).join('; ') || 'Error al guardar los registros DNS');
@@ -411,6 +417,19 @@ export default function PanelDominiosPage() {
                       }}
                       className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none font-mono text-[11px]"
                     />
+
+                    {rec.type === 'MX' && (
+                      <input
+                        type="number"
+                        placeholder="Prioridad"
+                        value={rec.priority ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? undefined : Number(e.target.value);
+                          setEditingDns(editingDns.map(r => r.id === rec.id ? { ...r, priority: val } : r));
+                        }}
+                        className="w-20 bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 outline-none"
+                      />
+                    )}
 
                     <button
                       onClick={() => handleRemoveDnsRecord(rec.id)}

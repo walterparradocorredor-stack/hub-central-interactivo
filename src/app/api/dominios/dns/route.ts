@@ -8,6 +8,7 @@ interface DnsRecordInput {
   name: string;
   content: string;
   ttl?: number;
+  priority?: number;
 }
 
 const PROXIABLE_TYPES = new Set(['A', 'AAAA', 'CNAME']);
@@ -64,7 +65,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido en el body de la petición' }, { status: 400 });
+  }
   const domainId = body?.domainId as string;
   const records = body?.records as DnsRecordInput[];
 
@@ -86,22 +92,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: current.error || 'Error al leer el estado actual de DNS' }, { status: 502 });
   }
 
-  const currentIds = new Set((current.records || []).map((r) => r.id));
+  const currentById = new Map((current.records || []).map((r) => [r.id, r]));
+  const currentIds = new Set(currentById.keys());
   const keptIds = new Set(records.map((r) => r.id).filter((id) => currentIds.has(id)));
 
   const errors: string[] = [];
 
   for (const record of records) {
-    if (!record.type || !record.name || !record.content) continue;
+    if (!record.type || !record.name || !record.content) {
+      errors.push(`Registro inválido (id=${record.id || 'nuevo'}): faltan type/name/content, no se aplicó ningún cambio`);
+      continue;
+    }
 
     const proxied = PROXIABLE_TYPES.has(record.type.toUpperCase());
 
     if (currentIds.has(record.id)) {
+      const existing = currentById.get(record.id)!;
+      const unchanged =
+        existing.type === record.type &&
+        existing.name === record.name &&
+        existing.content === record.content &&
+        existing.proxied === proxied &&
+        (existing.priority ?? undefined) === (record.priority ?? undefined) &&
+        (record.ttl === undefined || existing.ttl === record.ttl);
+      if (unchanged) continue;
+
       const result = await cloudflareClient.updateDnsRecord(zoneId, record.id, {
         type: record.type,
         name: record.name,
         content: record.content,
         ttl: record.ttl,
+        priority: record.priority,
         proxied
       });
       if (!result.success) errors.push(`${record.name}: ${result.error}`);
@@ -111,6 +132,7 @@ export async function POST(request: NextRequest) {
         name: record.name,
         content: record.content,
         ttl: record.ttl,
+        priority: record.priority,
         proxied
       });
       if (!result.success) errors.push(`${record.name}: ${result.error}`);
@@ -120,15 +142,21 @@ export async function POST(request: NextRequest) {
   for (const existingId of currentIds) {
     if (!keptIds.has(existingId)) {
       const result = await cloudflareClient.deleteDnsRecord(zoneId, existingId);
-      if (!result.success) errors.push(`Error al borrar registro: ${result.error}`);
+      if (!result.success) {
+        const name = currentById.get(existingId)?.name || existingId;
+        errors.push(`No se pudo borrar ${name}: ${result.error}`);
+      }
     }
   }
 
   const updated = await cloudflareClient.listDnsRecords(zoneId);
+  if (!updated.success) {
+    errors.push('Los cambios se aplicaron pero no se pudo confirmar el estado final de la zona; refresca para verificarlo.');
+  }
 
   return NextResponse.json({
     success: errors.length === 0,
     errors: errors.length ? errors : undefined,
-    records: updated.records || []
+    records: updated.success ? updated.records : undefined
   });
 }
