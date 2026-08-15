@@ -24,13 +24,29 @@ export const getWompiDirectLinks = (): Record<string, string> => ({
 
 export const WOMPI_DIRECT_LINKS = getWompiDirectLinks();
 
+// Lee un valor u obtiene un objeto anidado por ruta de puntos (ej: "transaction.id")
+function getByPath(obj: any, path: string): any {
+  return path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
 export class WompiService {
   private publicKey: string;
   private integritySecret: string;
+  private eventsSecret: string;
 
   constructor() {
-    this.publicKey = process.env.WOMPI_PUBLIC_KEY || 'pub_prod_jK8DLVA15tx6D05Fu46zSCzzg3a3tqgs';
-    this.integritySecret = process.env.WOMPI_INTEGRITY_SECRET || 'prod_integrity_iwRqf1yMxeEuZLb42LqGjr6OkH3p3xiW';
+    // Sin fallback hardcodeado: si la variable de entorno falta, se debe
+    // fallar de forma visible en vez de firmar con una llave equivocada.
+    this.publicKey = process.env.WOMPI_PUBLIC_KEY || '';
+    this.integritySecret = process.env.WOMPI_INTEGRITY_SECRET || '';
+    this.eventsSecret = process.env.WOMPI_EVENTS_SECRET || '';
+
+    if (!this.publicKey || !this.integritySecret) {
+      console.error(
+        '⚠️ WOMPI_PUBLIC_KEY o WOMPI_INTEGRITY_SECRET no están configuradas en el entorno. ' +
+        'Los checkouts generados fallarán la verificación de Wompi.'
+      );
+    }
   }
 
   /**
@@ -39,8 +55,34 @@ export class WompiService {
   generateIntegritySignature(reference: string, amountInCop: number, currency: string = 'COP'): string {
     const amountInCents = Math.round(amountInCop * 100);
     const concatenatedString = `${reference}${amountInCents}${currency}${this.integritySecret}`;
-    
+
     return crypto.createHash('sha256').update(concatenatedString).digest('hex');
+  }
+
+  /**
+   * Verifica la firma (checksum) de un evento webhook entrante de Wompi.
+   * https://docs.wompi.co/docs/colombia/eventos/
+   */
+  verifyEventSignature(payload: any): boolean {
+    if (!this.eventsSecret) {
+      console.error('⚠️ WOMPI_EVENTS_SECRET no configurada: no se puede verificar el webhook.');
+      return false;
+    }
+
+    const properties: string[] = payload?.signature?.properties || [];
+    const receivedChecksum: string = payload?.signature?.checksum || '';
+    const timestamp = payload?.timestamp;
+
+    if (!properties.length || !receivedChecksum || !timestamp) return false;
+
+    const concatenatedValues = properties
+      .map((prop) => getByPath(payload.data, prop))
+      .join('');
+
+    const toHash = `${concatenatedValues}${timestamp}${this.eventsSecret}`;
+    const computedChecksum = crypto.createHash('sha256').update(toHash).digest('hex');
+
+    return computedChecksum.toUpperCase() === receivedChecksum.toUpperCase();
   }
 
   /**

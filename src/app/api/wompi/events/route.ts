@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { wompiService } from '@/lib/wompi';
 import { sendTelegramNotification } from '@/lib/notifications';
 import { namecheapClient } from '@/lib/namecheap';
+
+// Cliente con service_role: bypassa RLS de forma segura porque este endpoint
+// ya verifica el checksum de Wompi antes de escribir nada.
+function getServiceClient() {
+  const url = process.env.SUPABASE_INTERNAL_URL || 'http://supabase-kong:8000';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createClient(url, serviceKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Verificación de firma: rechaza cualquier webhook que no venga
+    // realmente de Wompi (evita ventas/domino falsos inyectados por terceros).
+    if (!wompiService.verifyEventSignature(body)) {
+      console.error('Webhook de Wompi rechazado: firma inválida o WOMPI_EVENTS_SECRET ausente.');
+      return NextResponse.json({ status: 'rejected', reason: 'Firma inválida' }, { status: 401 });
+    }
+
     const eventData = body?.data?.transaction;
 
     if (!eventData) {
@@ -23,8 +41,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Registrar la transacción en Supabase (fuente de verdad para el Command Center)
+    if (status === 'APPROVED') {
+      const supabaseAdmin = getServiceClient();
+      const { error: insertError } = await supabaseAdmin.from('purchases').insert({
+        email: customer_email || null,
+        item_id: domainName || reference,
+        item_type: 'domain',
+        amount: amountInCop,
+        currency: 'COP',
+        payment_method: payment_method_type || 'wompi',
+        transaction_id: id,
+        status: 'approved',
+      });
+      if (insertError) {
+        console.error('Error registrando compra en Supabase:', insertError.message);
+      }
+    }
+
     let registrationResult = 'ℹ️ Registro pendiente (comprobar en panel)';
-    
+
     // Si viene un dominio explícito y el pago está APROBADO, intentar registro en Namecheap
     if (status === 'APPROVED' && domainName && domainName.includes('.')) {
       const regResponse = await namecheapClient.registerDomain(domainName, {
@@ -48,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Obtener saldo actualizado de Namecheap
     const balanceInfo = await namecheapClient.getBalances();
-    const balanceText = balanceInfo 
+    const balanceText = balanceInfo
       ? `$${balanceInfo.availableBalance.toFixed(2)} ${balanceInfo.currency}`
       : 'No disponible';
 
