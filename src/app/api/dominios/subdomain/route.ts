@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cloudflareClient, DEFAULT_TARGET_IP } from '@/lib/cloudflare';
+
+const BASE_DOMAIN = 'waltherparrado.com';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +17,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre del subdominio debe tener al menos 3 caracteres' }, { status: 400 });
     }
 
-    const fullSubdomain = `${cleanName}.hub.waltherparrado.com`;
-    const resolvedIp = targetIp || '31.97.145.8';
+    const resolvedIp = targetIp || DEFAULT_TARGET_IP;
+    const result = await cloudflareClient.createSubdomainRecord(cleanName, BASE_DOMAIN, resolvedIp);
 
-    // Notificar al bot o registrar
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || 'No se pudo crear el registro DNS en Cloudflare' }, { status: 502 });
+    }
+
     return NextResponse.json({
       success: true,
-      subdomain: fullSubdomain,
+      subdomain: result.fqdn,
       ip: resolvedIp,
       status: 'Activo en Servidor VPS',
       dnsType: 'A Record',
-      message: `¡Subdominio ${fullSubdomain} configurado exitosamente apuntando a ${resolvedIp}!`,
+      message: `¡Subdominio ${result.fqdn} configurado exitosamente apuntando a ${resolvedIp}!`,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 días de prueba gratis
     });
   } catch (error: any) {

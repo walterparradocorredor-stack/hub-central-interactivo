@@ -25,7 +25,73 @@ const sanitizePostList = (posts: any[]): any[] => {
   });
 };
 
+const splitIntoParagraphs = (text: string): string[] => {
+  const normalized = text
+    .replace(/\\n/g, '\n')
+    .replace(/(#{1,6}\s*)/g, '\n\n$1');
+
+  let paragraphs = normalized
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  // Los artículos generados automáticamente a veces llegan como un solo
+  // bloque de texto sin saltos de línea. En ese caso los agrupamos por
+  // oraciones para que no se vean como un párrafo denso ilegible.
+  if (paragraphs.length <= 1) {
+    const singleBlock = paragraphs[0] || normalized.trim();
+    const sentences = singleBlock.match(/[^.!?]+[.!?]+(\s+|$)/g) || [singleBlock];
+    const grouped: string[] = [];
+    for (let i = 0; i < sentences.length; i += 3) {
+      grouped.push(sentences.slice(i, i + 3).join('').trim());
+    }
+    paragraphs = grouped.filter((p) => p.length > 0);
+  }
+
+  return paragraphs;
+};
+
 const defaultBlogPosts = sanitizePostList(REALISTIC_SAMPLE_POSTS);
+
+const MALE_VOICE_HINTS = ['jorge', 'diego', 'carlos', 'miguel', 'alvaro', 'álvaro', 'gonzalo', 'male', 'hombre'];
+const FEMALE_VOICE_HINTS = ['monica', 'mónica', 'paulina', 'helena', 'sabina', 'elvira', 'female', 'mujer', 'lucia', 'lucía'];
+
+// Voz masculina en español para el fallback nativo del navegador (cuando
+// /api/voice-clone con Edge-TTS no está disponible). getVoices() puede
+// devolver una lista vacía hasta que el navegador dispara 'voiceschanged'.
+const getMaleSpanishVoice = (): Promise<SpeechSynthesisVoice | null> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      resolve(null);
+      return;
+    }
+
+    const pickVoice = (voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null => {
+      const spanish = voices.filter((v) => v.lang?.toLowerCase().startsWith('es'));
+      if (spanish.length === 0) return null;
+      const male = spanish.find((v) => MALE_VOICE_HINTS.some((hint) => v.name.toLowerCase().includes(hint)));
+      if (male) return male;
+      const notFemale = spanish.find((v) => !FEMALE_VOICE_HINTS.some((hint) => v.name.toLowerCase().includes(hint)));
+      return notFemale || spanish[0];
+    };
+
+    const existing = window.speechSynthesis.getVoices();
+    if (existing.length > 0) {
+      resolve(pickVoice(existing));
+      return;
+    }
+
+    const handleVoicesChanged = () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      resolve(pickVoice(window.speechSynthesis.getVoices()));
+    };
+    window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+    setTimeout(() => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      resolve(pickVoice(window.speechSynthesis.getVoices()));
+    }, 500);
+  });
+};
 
 export default function BlogContent() {
   const [blogPosts, setBlogPosts] = useState(defaultBlogPosts);
@@ -91,6 +157,8 @@ export default function BlogContent() {
       const utterance = new SpeechSynthesisUtterance(fullSpeechText.substring(0, 1000));
       utterance.lang = 'es-CO';
       utterance.rate = 0.95;
+      const preferredVoice = await getMaleSpanishVoice();
+      if (preferredVoice) utterance.voice = preferredVoice;
       utterance.onend = () => setIsPlayingAudio(false);
       window.speechSynthesis.speak(utterance);
       setIsSynthesizingAudio(false);
@@ -569,10 +637,10 @@ export default function BlogContent() {
             {/* Article Image */}
             <div style={{ position: "relative", width: "100%", height: "400px", borderRadius: "16px", overflow: "hidden", marginBottom: "2rem", border: "1px solid rgba(255,255,255,0.05)" }}>
               <img
-                src={activePost.image || '/Portada-colunmnas-2.webp'}
+                src={activePost.image || '/wp-logo.png'}
                 alt={activePost.title}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/Portada-colunmnas-2.webp";
+                  (e.target as HTMLImageElement).src = "/wp-logo.png";
                 }}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
@@ -580,11 +648,7 @@ export default function BlogContent() {
 
             {/* Article Text Paragraphs */}
             <div style={{ fontSize: "1.05rem", lineHeight: 1.8, color: "#cbd5e1" }} className="space-y-6">
-              {(activePost.content || activePost.excerpt || "")
-                .replace(/\\n/g, '\n')
-                .replace(/(#{1,6}\s*)/g, '\n\n$1')
-                .split(/\n\s*\n/)
-                .filter((p: string) => p.trim().length > 0)
+              {splitIntoParagraphs(activePost.content || activePost.excerpt || "")
                 .map((paragraph: string, i: number) => {
                   const cleanText = paragraph.replace(/^#{1,6}\s*/, '').trim();
                   

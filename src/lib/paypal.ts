@@ -6,8 +6,8 @@ export interface PayPalOrderResponse {
 
 export class PayPalService {
   private getCredentials() {
-    const clientId = process.env.PAYPAL_CLIENT_ID || 'BAAcHjnFgGVSas9sP429fGkxSHmA0v7wej_nvobstIvmcMAnCZ5-fpIsfKTs93_5X9dmuDbdo-ZfcqZ7jA';
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET || 'EI0nUymd3dze9ycZ8_CR-LuWjiBlKfeRUrD7qzOjlyH5XvUW_7k2Gt2SPf2wROjyMB8Yvbbtf_p6fAV7';
+    const clientId = process.env.PAYPAL_CLIENT_ID || '';
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET || '';
     const mode = process.env.PAYPAL_MODE || 'live';
     const baseUrl = mode === 'sandbox'
       ? 'https://api-m.sandbox.paypal.com'

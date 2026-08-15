@@ -13,6 +13,18 @@ const supabaseUrl = isServer
   ? (process.env.SUPABASE_INTERNAL_URL || selfHostedUrl || 'http://supabase-kong:8000')
   : selfHostedUrl;
 
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg2NTU1MTI0LCJleHAiOjIxMDE5MTUxMjR9.gxsX0XhFm7uw7JjCJ5NB1g4K9Z8V_pRUkaLPHQo6Ps0';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Cliente Supabase server-side que actúa como el usuario dueño de `accessToken`
+ * (su JWT de sesión), para que las políticas RLS filtren por ese usuario en vez
+ * de por el anon público. Úsalo en route handlers que reciben el token del
+ * cliente vía header Authorization.
+ */
+export function getUserScopedClient(accessToken: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } }
+  });
+}

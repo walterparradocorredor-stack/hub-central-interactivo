@@ -39,7 +39,7 @@ const blogPosts = [
       "Una mirada profunda sobre las dinámicas de financiamiento educativo, infraestructura y cobertura escolar en el departamento de Sucre.",
     category: "Educación",
     date: "Mayo 2023",
-    image: "/Portada-colunmnas-2.webp",
+    image: "/wp-logo.png",
     readTime: "7 min",
   },
   {
@@ -59,7 +59,7 @@ const blogPosts = [
       "Una mirada local sobre la actualidad pedagógica. Análisis semanal de la calidad educativa en la educación media colombiana.",
     category: "Calidad",
     date: "Julio 2023",
-    image: "/Portada-colunmnas-2.webp",
+    image: "/wp-logo.png",
     readTime: "4 min",
   },
 ];
@@ -915,7 +915,7 @@ async function PublicationsSection() {
           <p style={{ color: "#94a3b8", fontSize: "1rem", marginBottom: "1rem" }}>Reflexiones en audio sobre gerencia institucional, innovación pedagógica y liderazgo educativo en Colombia.</p>
           <div className="flex flex-wrap justify-center lg:justify-start gap-4">
             <a href={spotify} target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem", borderColor: "#1db954", color: "#1db954" }}>
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.48.659.24 1.02h.061zm1.44-3.3c-.3.54-.9.66-1.38.36-3.24-1.98-8.159-2.58-11.939-1.38-.54.18-1.08-.12-1.26-.66-.18-.54.12-1.08.66-1.26 4.32-1.38 9.72-.72 13.5 1.56.54.3.66.9.42 1.38zm.12-3.48c-3.9-2.28-10.32-2.52-14.04-1.38-.66.18-1.38-.18-1.56-.84-.18-.66.18-1.38.84-1.56 4.38-1.32 11.4-.96 16.02 1.68.6.36.78 1.14.48 1.68-.36.66-1.14.78-1.74.42z" /></svg>
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.36-.66.48-1.021.24-2.82-1.74-6.36-2.1-10.561-1.14-.418.12-.779-.18-.899-.54-.12-.42.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.48.66.24 1.02zm1.441-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.481.12-1.021-.12-1.141-.6-.12-.48.12-1.02.6-1.14 4.32-1.26 9.719-.6 13.379 1.56.42.18.6.72.3 1.26zm.12-3.36c-3.84-2.28-10.2-2.52-13.86-1.38-.6.18-1.2-.12-1.38-.72-.18-.6.12-1.2.72-1.38 4.26-1.32 11.28-1.08 15.72 1.56.54.3.72 1.02.42 1.56-.3.54-1.02.72-1.62.36z" /></svg>
               Spotify
             </a>
             <a href={itunes} target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem", borderColor: "#a855f7", color: "#a855f7" }}>

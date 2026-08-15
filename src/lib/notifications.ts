@@ -2,8 +2,8 @@
  * Servicio de Notificaciones por Telegram Bot & Webhooks de J&M / Walther Parrado
  */
 export async function sendTelegramNotification(message: string): Promise<boolean> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN || '8985776455:AAHhgRFVgBdUIrLRvvoVJZLnQNMjAMWgYWA';
-  const chatId = process.env.TELEGRAM_CHAT_ID || '-1003705996978';
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+  const chatId = process.env.TELEGRAM_CHAT_ID || '';
 
   if (!botToken || botToken.includes('placeholder')) {
     console.log('[Notificación Telegram Simulada]:', message);

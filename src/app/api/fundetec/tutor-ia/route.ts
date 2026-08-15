@@ -4,8 +4,6 @@ export async function POST(req: Request) {
   try {
     const { messages, userQuestion } = await req.json();
 
-    const groqApiKey = process.env.GROQ_API_KEY || 'gsk_x4P21p0yM44T6W5R0lZ0WGdyb3FY4U10s016mP0190m018'; // Fallback API key if set in env
-
     const systemPrompt = `Eres "Profesor ContaBot IA", el Tutor Socrático de Contabilidad y Finanzas del Instituto Fundetec (Colombia).
 Tu misión pedagógica es guiar a los estudiantes a comprender los principios contables (PUC Colombia, Partida Doble, NIIF básicas, Nómina y Retenciones).
 
