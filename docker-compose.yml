@@ -6,7 +6,7 @@ services:
     container_name: hub-front
     restart: always
     ports:
-      - "127.0.0.1:3050:3000"
+      - "3050:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
