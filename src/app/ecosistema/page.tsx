@@ -243,6 +243,16 @@ const defaultCategories: Category[] = [
         statusBadge: "En Vivo 24/7",
         metrics: "WhatsApp Business API",
       },
+      {
+        name: "JARVIS AI — Asistente Ejecutivo",
+        description: "Asistente de IA personal que gestiona agenda, correo, voz y visión en tiempo real. Probalo con datos de ejemplo, sin crear cuenta.",
+        tag: "Agentes Conversacionales",
+        url: "/jarvis-demo",
+        internalRoute: "/jarvis-demo",
+        badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+        statusBadge: "Demo en Vivo",
+        metrics: "Calendar · Gmail · Voz · Visión",
+      },
     ],
   },
 ];
